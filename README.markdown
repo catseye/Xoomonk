@@ -11,6 +11,11 @@ are first-class objects.  Malingering updatable stores unify several language
 constructs, including procedure activations, named parameters, and object-like
 data structures.
 
+    -> Functionality "Interpret Xoomonk program" is implemented by
+    -> shell command "python src/xoomonk.py"
+
+    -> Tests for functionality "Interpret Xoomonk program"
+
 Description
 -----------
 
