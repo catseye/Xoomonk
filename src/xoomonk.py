@@ -46,6 +46,7 @@ def eval_xoomonk(ast):
     else:
         raise UnimplementedError, "not an AST type I know: %s" % type
 
+
 class Scanner(object):
     """A Scanner provides facilities for extracting successive
     Xoomonk tokens from a string.
@@ -84,37 +85,33 @@ class Scanner(object):
         self.type = None
         self.scan()
 
-    def scan_pattern(self, pattern):
+    def scan_pattern(self, pattern, type):
         pattern = r'^(' + pattern + r')(.*?)$'
-        match = re.match(pattern, self.text, re.MULTILINE)
+        match = re.match(pattern, self.text, re.DOTALL)
         if not match:
             return False
         else:
+            self.type = type
             self.token = match.group(1)
             self.text = match.group(2)
-            #print >>sys.stderr, "(%s)" % (self.token)
+            #print >>sys.stderr, "(%r/%s->%r)" % (self.token, self.type, self.text)
             return True
 
     def scan(self):
-        self.scan_pattern(r'\s*')
+        self.scan_pattern(r'[ \t\n\r]*', 'whitespace')
         if not self.text:
             self.token = None
             self.type = 'EOF'
             return
-        if self.scan_pattern(r':=|\;|\{|\}|\*|\.|\^|\$'):
-            self.type = 'operator'
+        if self.scan_pattern(r':=|\;|\{|\}|\*|\.|\^|\$', 'operator'):
             return
-        if self.scan_pattern(r'\d+'):
-            self.type = 'integer literal'
+        if self.scan_pattern(r'\d+', 'integer literal'):
             return
-        if self.scan_pattern(r'\".*?\"'):
-            self.type = 'string literal'
+        if self.scan_pattern(r'\".*?\"', 'string literal'):
             return
-        if self.scan_pattern(r'\w+'):
-            self.type = 'identifier'
+        if self.scan_pattern(r'\w+', 'identifier'):
             return
-        if self.scan_pattern(r'.'):
-            self.type = 'unknown character'
+        if self.scan_pattern(r'.', 'unknown character'):
             return
         else:
             raise ValueError, "this should never happen, self.text=(%s)" % self.text
@@ -161,6 +158,10 @@ class Parser(object):
     >>> a = Parser("a:=5 c:=4")
     >>> a.program()
     AST('Program',[AST('Assignment',[AST('Ref',[AST('Identifier',value='a')]), AST('IntLit',value=5)]), AST('Assignment',[AST('Ref',[AST('Identifier',value='c')]), AST('IntLit',value=4)])])
+
+    >>> a = Parser("a := { b := 1 }")
+    >>> a.program()
+    AST('Program',[AST('Assignment',[AST('Ref',[AST('Identifier',value='a')]), AST('Block',[AST('Assignment',[AST('Ref',[AST('Identifier',value='b')]), AST('IntLit',value=1)])])])])
 
     """
     def __init__(self, text):
@@ -325,6 +326,7 @@ def main(argv):
     file = open(args[0])
     text = file.read()
     file.close()
+    #print repr(text)
     p = Parser(text)
     ast = p.program()
     result = eval_xoomonk(ast)
