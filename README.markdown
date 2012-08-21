@@ -106,7 +106,7 @@ allow for textual output.
     | print string "Hello, world!"
     | print string "The value of a is ";
     | print a;
-    | print "!"
+    | print string "!"
     = A
     = Hello, world!
     = The value of a is 65!
@@ -205,7 +205,7 @@ executed again.
 The main program is a block.  If it is unsaturated, no execution occurs
 at all.
 
-    | print "hello"
+    | print string "hello"
     | a := 14
     | b := c
     = 
@@ -238,11 +238,11 @@ If, however, the unsaturated store contains some variables that have
 been updated since the store was created, those variable may be accessed.
 
     | a := {
-    |   print "executing block"
+    |   print string "executing block"
     |   p := q
     |   d := c
     | }
-    | a.q = 7
+    | a.q := 7
     | print a.q
     = 7
 
@@ -323,11 +323,11 @@ assigned to `x` in the `else` store.
     | o1 := $if*
     | o1.then := {
     |   y := x
-    |   print "condition is true"
+    |   print string "condition is true"
     | }
     | o1.else := {
     |   y := x
-    |   print "condition is false"
+    |   print string "condition is false"
     | }
     | o1.cond := 0
     = condition is false
@@ -335,11 +335,11 @@ assigned to `x` in the `else` store.
     | o1 := $if*
     | o1.then := {
     |   y := x
-    |   print "condition is true"
+    |   print string "condition is true"
     | }
     | o1.else := {
     |   y := x
-    |   print "condition is false"
+    |   print string "condition is false"
     | }
     | o1.cond := 1
     = condition is true
