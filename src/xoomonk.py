@@ -6,6 +6,25 @@
 
 import re
 
+
+class AST(object):
+    def __init__(self, type, children=None, value=None):
+        self.type = type
+        self.value = value
+        if children is not None:
+            self.children = children
+        else:
+            self.children = []
+
+    def add_child(self, item):
+        self.children.append(item)
+
+    def __repr__(self):
+        if self.value is None:
+            return 'AST(%r,%r)' % (self.type, self.children)
+        return 'AST(%r,value=%r)' % (self.type, self.value)
+
+
 class Scanner(object):
     """A Scanner provides facilities for extracting successive
     Xoomonk tokens from a string.
@@ -104,80 +123,94 @@ class Parser(object):
 
     >>> a = Parser("123")
     >>> a.expr()
-    123
+    AST('Literal',value=123)
     >>> a = Parser("{ a := 123 }")
     >>> a.expr()
-    (block)
+    AST('Block',[AST('Assignment',[AST('Ref',[AST('Identifier',value='a')]), AST('Literal',value=123)])])
 
     """
     def __init__(self, text):
         self.scanner = Scanner(text)
 
     def program(self):
+        p = AST('Program')
         while not self.scanner.at_end():
-            self.stmt()
+            p.add_child(self.stmt())
+        return p
 
     def stmt(self):
         if self.scanner.on("print"):
-            self.print_stmt()
+            return self.print_stmt()
         else:
-            self.assign()
+            return self.assign()
 
     def assign(self):
-        self.ref()
+        r = self.ref()
         self.scanner.expect(":=")
-        self.expr()
+        e = self.expr()
+        return AST('Assignment', [r, e])
 
     def print_stmt(self):
+        s = None
         self.scanner.expect("print")
         if self.scanner.consume("string"):
             st = self.scanner.token
             self.scanner.scan()
+            s = AST('PrintString', value=st)
         elif self.scanner.consume("char"):
-            self.expr()
+            e = self.expr()
+            s = AST('PrintChar', [e])
         else:
-            self.expr()
+            e = self.expr()
+            s = AST('Print', [e])
+        newline = True
         if self.scanner.consume(";"):
-            # mark as no nl
-            pass
+            newline = False
+        if newline:
+            s = AST('Newline', [s])
+        return s
 
     def expr(self):
         v = None
         if self.scanner.on("{"):
             v = self.block()
         elif self.scanner.on_type('literal'):
-            v = int(self.scanner.token)
+            v = AST('Literal', value=int(self.scanner.token))
+            self.scanner.scan()
         else:
             v = self.ref()
         if self.scanner.consume("*"):
-            # v = copy(v)
-            pass
+            v = AST('CopyOf', [v])
         return v
 
     def block(self):
+        b = AST('Block')
         self.scanner.expect("{")
         while not self.scanner.on("}"):
-            self.stmt()
+            b.add_child(self.stmt())
         self.scanner.expect("}")
+        return b
 
     def ref(self):
-        self.name()
+        r = AST('Ref')
+        r.add_child(self.name())
         while self.scanner.consume("."):
-            self.name()
+            r.add_child(self.name())
+        return r
 
     def name(self):
         if self.scanner.consume("^"):
-            return "^"
+            return AST('Upvalue')
         elif self.scanner.consume("$"):
             self.scanner.check_type("identifier")
             id = self.scanner.token
             self.scanner.scan()
-            return id
+            return AST('Dollar', value=id)
         else:
             self.scanner.check_type("identifier")
             id = self.scanner.token
             self.scanner.scan()
-            return id
+            return AST('Identifier', value=id)
 
 
 # Runtime support for Xoomonk.
