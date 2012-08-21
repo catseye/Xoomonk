@@ -4,14 +4,27 @@
 
 """
 
+import re
+
 class Scanner(object):
     def __init__(self, text):
         self.text = text
         self.scan()
 
-    def scan(self):
-        pass
+    def scan_pattern(self, pattern):
+        pattern = r'^(' + pattern + r')(.*?)$'
+        match = re.match(pattern, self.text)
+        if not match:
+            return False
+        else:
+            self.token = match.group(1)
+            self.text = match.group(2)
+            return True
 
+    def scan(self):
+        self.scan_pattern(r'\s+')
+        # := ; { } * . ^ $
+        
     def expect(self, token):
         if self.token == token:
             self.scan()
