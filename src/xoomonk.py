@@ -27,6 +27,25 @@ class AST(object):
         return 'AST(%r,value=%r)' % (self.type, self.value)
 
 
+def eval_xoomonk(ast):
+    type = ast.type
+    if type == 'Program':
+        pass
+    elif type == 'Assignment':
+        pass
+    elif type == 'PrintString':
+        pass
+    elif type == 'PrintChar':
+        pass
+    elif type == 'Print':
+        pass
+    elif type == 'Newline':
+        pass
+    elif type == 'Ref':
+        pass
+    else:
+        raise UnimplementedError, "not an AST type I know: %s" % type
+
 class Scanner(object):
     """A Scanner provides facilities for extracting successive
     Xoomonk tokens from a string.
@@ -308,7 +327,7 @@ def main(argv):
     file.close()
     p = Parser(text)
     ast = p.program()
-    print repr(ast)
+    result = eval_xoomonk(ast)
     sys.exit(0)
 
 
