@@ -1,9 +1,97 @@
 #!/usr/bin/env python
 
-"""An attempt to implement Xoomonk in Python.  Embryonic, as of this writing;
-only includes some runtime support,  no parser.
+"""An attempt to implement Xoomonk in Python.
 
 """
+
+class Scanner(object):
+    def __init__(self, text):
+        self.text = text
+        self.scan()
+
+    def scan(self):
+        pass
+
+    def expect(self, token):
+        if self.token == token:
+            self.scan()
+        else:
+            raise SyntaxError("expected %s" % token)
+
+    def on(self, token):
+        return self.token == token
+
+    def consume(self, token):
+        if self.token == token:
+            self.scan()
+            return True
+        else:
+            return False
+
+
+# Parser
+
+class Parser(object):
+    def program(self):
+        while not self.scanner.at_end():
+            self.stmt()
+
+    def stmt(self):
+        if self.scanner.on("print"):
+            self.print_stmt()
+        else:
+            self.assign()
+
+    def assign(self):
+        self.ref()
+        self.scanner.expect(":=")
+        self.expr()
+
+    def print_stmt(self):
+        self.scanner.expect("print")
+        if self.scanner.consume("string"):
+            st = self.scanner.token
+            self.scanner.scan()
+        elif self.scanner.consume("char"):
+            self.expr()
+        else:
+            self.expr()
+        if self.scanner.consume(";"):
+            # mark as no nl
+            pass
+
+    def expr(self):
+        v = None
+        if self.scanner.on("{"):
+            v = self.block()
+        elif self.scanner.on_pattern(r'\d+'):
+            v = int(self.token)
+        else:
+            v = self.ref()
+        if self.scanner.consume("*"):
+            # v = copy(v)
+            pass
+        return v
+
+    def block(self):
+        self.scanner.expect("{")
+        while not self.scanner.on("}"):
+            self.stmt()
+        self.scanner.expect("}")
+
+    def ref(self):
+        self.name()
+        while self.scanner.consume("."):
+            self.name()
+
+    def name(self):
+        if self.scanner.consume("^"):
+            return "^"
+        elif self.scanner.consume("$"):
+            return self.scanner.token
+        else:
+            return self.scanner.token
+
 
 # Runtime support for Xoomonk.
 
