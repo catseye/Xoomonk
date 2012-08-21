@@ -7,17 +7,23 @@
 import re
 
 class Scanner(object):
-    """
+    """A Scanner provides facilities for extracting successive
+    Xoomonk tokens from a string.
+
     >>> a = Scanner("  {:= }  foo  ")
     >>> a.token
     '{'
     >>> a.type
-    'SYMBOL'
+    'operator'
     >>> a.scan()
     >>> a.on(":=")
     True
-    >>> a.on_type('SYMBOL')
+    >>> a.on_type('operator')
     True
+    >>> a.check_type('literal')
+    Traceback (most recent call last):
+    ...
+    SyntaxError: Expected literal, but found operator (':=')
     >>> a.scan()
     >>> a.consume(".")
     False
@@ -29,7 +35,7 @@ class Scanner(object):
     >>> a.expect("bar")
     Traceback (most recent call last):
     ...
-    SyntaxError: expected bar
+    SyntaxError: Expected 'bar', but found 'None'
 
     """
     def __init__(self, text):
@@ -55,26 +61,32 @@ class Scanner(object):
             self.type = 'EOF'
             return
         if self.scan_pattern(r':=|\;|\{|\}|\*|\.|\^|\$'):
-            self.type = 'SYMBOL'
+            self.type = 'operator'
             return
         if self.scan_pattern(r'\d+'):
-            self.type = 'INTLIT'
+            self.type = 'literal'
             return
         if self.scan_pattern(r'\w+'):
-            self.type = 'IDENT'
+            self.type = 'identifier'
             return
 
     def expect(self, token):
         if self.token == token:
             self.scan()
         else:
-            raise SyntaxError("expected %s" % token)
+            raise SyntaxError("Expected '%s', but found '%s'" %
+                              (token, self.token))
 
     def on(self, token):
         return self.token == token
 
     def on_type(self, type):
         return self.type == type
+
+    def check_type(self, type):
+        if not self.type == type:
+            raise SyntaxError("Expected %s, but found %s ('%s')" %
+                              (type, self.type, self.token))
 
     def consume(self, token):
         if self.token == token:
@@ -87,6 +99,20 @@ class Scanner(object):
 # Parser
 
 class Parser(object):
+    """A Parser provides facilities for recognizing various
+    parts of a Xoomonk program based on Xoomonk's grammar.
+
+    >>> a = Parser("123")
+    >>> a.expr()
+    123
+    >>> a = Parser("{ a := 123 }")
+    >>> a.expr()
+    (block)
+
+    """
+    def __init__(self, text):
+        self.scanner = Scanner(text)
+
     def program(self):
         while not self.scanner.at_end():
             self.stmt()
@@ -119,8 +145,8 @@ class Parser(object):
         v = None
         if self.scanner.on("{"):
             v = self.block()
-        elif self.scanner.on_type('INTLIT'):
-            v = int(self.token)
+        elif self.scanner.on_type('literal'):
+            v = int(self.scanner.token)
         else:
             v = self.ref()
         if self.scanner.consume("*"):
@@ -143,9 +169,15 @@ class Parser(object):
         if self.scanner.consume("^"):
             return "^"
         elif self.scanner.consume("$"):
-            return self.scanner.token
+            self.scanner.check_type("identifier")
+            id = self.scanner.token
+            self.scanner.scan()
+            return id
         else:
-            return self.scanner.token
+            self.scanner.check_type("identifier")
+            id = self.scanner.token
+            self.scanner.scan()
+            return id
 
 
 # Runtime support for Xoomonk.
