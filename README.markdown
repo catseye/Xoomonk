@@ -12,7 +12,7 @@ constructs, including procedure activations, named parameters, and object-like
 data structures.
 
     -> Functionality "Interpret Xoomonk program" is implemented by
-    -> shell command "python src/xoomonk.py"
+    -> shell command "python src/xoomonk.py %(test-file)"
 
     -> Tests for functionality "Interpret Xoomonk program"
 

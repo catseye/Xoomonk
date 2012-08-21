@@ -4,7 +4,9 @@
 
 """
 
+from optparse import OptionParser
 import re
+import sys
 
 
 class AST(object):
@@ -39,10 +41,10 @@ class Scanner(object):
     True
     >>> a.on_type('operator')
     True
-    >>> a.check_type('literal')
+    >>> a.check_type('identifier')
     Traceback (most recent call last):
     ...
-    SyntaxError: Expected literal, but found operator (':=')
+    SyntaxError: Expected identifier, but found operator (':=')
     >>> a.scan()
     >>> a.consume(".")
     False
@@ -65,16 +67,17 @@ class Scanner(object):
 
     def scan_pattern(self, pattern):
         pattern = r'^(' + pattern + r')(.*?)$'
-        match = re.match(pattern, self.text)
+        match = re.match(pattern, self.text, re.MULTILINE)
         if not match:
             return False
         else:
             self.token = match.group(1)
             self.text = match.group(2)
+            #print >>sys.stderr, "(%s)" % (self.token)
             return True
 
     def scan(self):
-        self.scan_pattern(r'\s+')
+        self.scan_pattern(r'\s*')
         if not self.text:
             self.token = None
             self.type = 'EOF'
@@ -83,11 +86,19 @@ class Scanner(object):
             self.type = 'operator'
             return
         if self.scan_pattern(r'\d+'):
-            self.type = 'literal'
+            self.type = 'integer literal'
+            return
+        if self.scan_pattern(r'\".*?\"'):
+            self.type = 'string literal'
             return
         if self.scan_pattern(r'\w+'):
             self.type = 'identifier'
             return
+        if self.scan_pattern(r'.'):
+            self.type = 'unknown character'
+            return
+        else:
+            raise ValueError, "this should never happen, self.text=(%s)" % self.text
 
     def expect(self, token):
         if self.token == token:
@@ -123,10 +134,14 @@ class Parser(object):
 
     >>> a = Parser("123")
     >>> a.expr()
-    AST('Literal',value=123)
+    AST('IntLit',value=123)
     >>> a = Parser("{ a := 123 }")
     >>> a.expr()
-    AST('Block',[AST('Assignment',[AST('Ref',[AST('Identifier',value='a')]), AST('Literal',value=123)])])
+    AST('Block',[AST('Assignment',[AST('Ref',[AST('Identifier',value='a')]), AST('IntLit',value=123)])])
+
+    >>> a = Parser("a:=5 c:=4")
+    >>> a.program()
+    AST('Program',[AST('Assignment',[AST('Ref',[AST('Identifier',value='a')]), AST('IntLit',value=5)]), AST('Assignment',[AST('Ref',[AST('Identifier',value='c')]), AST('IntLit',value=4)])])
 
     """
     def __init__(self, text):
@@ -134,7 +149,7 @@ class Parser(object):
 
     def program(self):
         p = AST('Program')
-        while not self.scanner.at_end():
+        while self.scanner.type != 'EOF':
             p.add_child(self.stmt())
         return p
 
@@ -154,6 +169,7 @@ class Parser(object):
         s = None
         self.scanner.expect("print")
         if self.scanner.consume("string"):
+            self.scanner.check_type("string literal")
             st = self.scanner.token
             self.scanner.scan()
             s = AST('PrintString', value=st)
@@ -174,8 +190,8 @@ class Parser(object):
         v = None
         if self.scanner.on("{"):
             v = self.block()
-        elif self.scanner.on_type('literal'):
-            v = AST('Literal', value=int(self.scanner.token))
+        elif self.scanner.on_type('integer literal'):
+            v = AST('IntLit', value=int(self.scanner.token))
             self.scanner.scan()
         else:
             v = self.ref()
@@ -273,11 +289,28 @@ class MalingeringStore(object):
             self.dict[name] = value
 
 
+def main(argv):
+    optparser = OptionParser(__doc__)
+    optparser.add_option("-t", "--test",
+                         action="store_true", dest="test", default=False,
+                         help="run test cases and exit")
+    (options, args) = optparser.parse_args(argv[1:])
+    if options.test:
+        import doctest
+        (fails, something) = doctest.testmod()
+        if fails == 0:
+            print "All tests passed."
+            sys.exit(0)
+        else:
+            sys.exit(1)
+    file = open(args[0])
+    text = file.read()
+    file.close()
+    p = Parser(text)
+    ast = p.program()
+    print repr(ast)
+    sys.exit(0)
+
+
 if __name__ == "__main__":
-    import doctest
-    (fails, something) = doctest.testmod()
-    if fails == 0:
-        print "All tests passed."
-        exit_code = 0
-    else:
-        exit_code = 1
+    main(sys.argv)
