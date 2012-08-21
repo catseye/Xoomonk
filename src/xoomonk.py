@@ -7,8 +7,35 @@
 import re
 
 class Scanner(object):
+    """
+    >>> a = Scanner("  {:= }  foo  ")
+    >>> a.token
+    '{'
+    >>> a.type
+    'SYMBOL'
+    >>> a.scan()
+    >>> a.on(":=")
+    True
+    >>> a.on_type('SYMBOL')
+    True
+    >>> a.scan()
+    >>> a.consume(".")
+    False
+    >>> a.consume("}")
+    True
+    >>> a.expect("foo")
+    >>> a.type
+    'EOF'
+    >>> a.expect("bar")
+    Traceback (most recent call last):
+    ...
+    SyntaxError: expected bar
+
+    """
     def __init__(self, text):
         self.text = text
+        self.token = None
+        self.type = None
         self.scan()
 
     def scan_pattern(self, pattern):
@@ -23,8 +50,20 @@ class Scanner(object):
 
     def scan(self):
         self.scan_pattern(r'\s+')
-        # := ; { } * . ^ $
-        
+        if not self.text:
+            self.token = None
+            self.type = 'EOF'
+            return
+        if self.scan_pattern(r':=|\;|\{|\}|\*|\.|\^|\$'):
+            self.type = 'SYMBOL'
+            return
+        if self.scan_pattern(r'\d+'):
+            self.type = 'INTLIT'
+            return
+        if self.scan_pattern(r'\w+'):
+            self.type = 'IDENT'
+            return
+
     def expect(self, token):
         if self.token == token:
             self.scan()
@@ -33,6 +72,9 @@ class Scanner(object):
 
     def on(self, token):
         return self.token == token
+
+    def on_type(self, type):
+        return self.type == type
 
     def consume(self, token):
         if self.token == token:
@@ -77,7 +119,7 @@ class Parser(object):
         v = None
         if self.scanner.on("{"):
             v = self.block()
-        elif self.scanner.on_pattern(r'\d+'):
+        elif self.scanner.on_type('INTLIT'):
             v = int(self.token)
         else:
             v = self.ref()
