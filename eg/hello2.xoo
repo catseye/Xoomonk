@@ -3,4 +3,4 @@ print char a
 print string "Hello, world!"
 print string "The value of a is ";
 print a;
-print "!"
+print string "!"

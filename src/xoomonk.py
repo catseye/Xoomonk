@@ -32,23 +32,36 @@ def eval_xoomonk(ast, state):
     if type == 'Program':
         for node in ast.children:
             eval_xoomonk(node, state)
+        return 0
     elif type == 'Assignment':
-        pass
+        # XXX not the real deal yet.
+        ref = ast.children[0]
+        name = ref.children[0].value
+        value = eval_xoomonk(ast.children[1], state)
+        state[name] = value
+        return value
     elif type == 'PrintString':
         sys.stdout.write(ast.value)
     elif type == 'PrintChar':
         value = eval_xoomonk(ast.children[0], state)
         sys.stdout.write(chr(value))
+        return 0
     elif type == 'Print':
         value = eval_xoomonk(ast.children[0], state)
         sys.stdout.write(str(value))
+        return 0
     elif type == 'Newline':
         eval_xoomonk(ast.children[0], state)
         sys.stdout.write('\n')
+        return 0
     elif type == 'Ref':
-        pass
+        # XXX not the real deal yet.
+        name = ast.children[0].value
+        return state.get(name, 0)
+    elif type == 'IntLit':
+        return ast.value
     else:
-        raise UnimplementedError, "not an AST type I know: %s" % type
+        raise NotImplementedError, "not an AST type I know: %s" % type
 
 
 class Scanner(object):
