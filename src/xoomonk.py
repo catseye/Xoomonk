@@ -27,20 +27,24 @@ class AST(object):
         return 'AST(%r,value=%r)' % (self.type, self.value)
 
 
-def eval_xoomonk(ast):
+def eval_xoomonk(ast, state):
     type = ast.type
     if type == 'Program':
-        pass
+        for node in ast.children:
+            eval_xoomonk(node, state)
     elif type == 'Assignment':
         pass
     elif type == 'PrintString':
-        pass
+        sys.stdout.write(ast.value)
     elif type == 'PrintChar':
-        pass
+        value = eval_xoomonk(ast.children[0], state)
+        sys.stdout.write(chr(value))
     elif type == 'Print':
-        pass
+        value = eval_xoomonk(ast.children[0], state)
+        sys.stdout.write(str(value))
     elif type == 'Newline':
-        pass
+        eval_xoomonk(ast.children[0], state)
+        sys.stdout.write('\n')
     elif type == 'Ref':
         pass
     else:
@@ -85,15 +89,15 @@ class Scanner(object):
         self.type = None
         self.scan()
 
-    def scan_pattern(self, pattern, type):
+    def scan_pattern(self, pattern, type, token_group=1, rest_group=2):
         pattern = r'^(' + pattern + r')(.*?)$'
         match = re.match(pattern, self.text, re.DOTALL)
         if not match:
             return False
         else:
             self.type = type
-            self.token = match.group(1)
-            self.text = match.group(2)
+            self.token = match.group(token_group)
+            self.text = match.group(rest_group)
             #print >>sys.stderr, "(%r/%s->%r)" % (self.token, self.type, self.text)
             return True
 
@@ -107,7 +111,8 @@ class Scanner(object):
             return
         if self.scan_pattern(r'\d+', 'integer literal'):
             return
-        if self.scan_pattern(r'\".*?\"', 'string literal'):
+        if self.scan_pattern(r'\"(.*?)\"', 'string literal',
+                             token_group=2, rest_group=3):
             return
         if self.scan_pattern(r'\w+', 'identifier'):
             return
@@ -311,6 +316,9 @@ class MalingeringStore(object):
 
 def main(argv):
     optparser = OptionParser(__doc__)
+    optparser.add_option("-a", "--show-ast",
+                         action="store_true", dest="show_ast", default=False,
+                         help="show parsed AST before evaluation")
     optparser.add_option("-t", "--test",
                          action="store_true", dest="test", default=False,
                          help="run test cases and exit")
@@ -326,10 +334,11 @@ def main(argv):
     file = open(args[0])
     text = file.read()
     file.close()
-    #print repr(text)
     p = Parser(text)
     ast = p.program()
-    result = eval_xoomonk(ast)
+    if options.show_ast:
+        print repr(ast)
+    result = eval_xoomonk(ast, {})
     sys.exit(0)
 
 
