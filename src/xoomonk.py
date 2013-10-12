@@ -275,6 +275,11 @@ class MalingeringStore(object):
         # check to see if it is unassigned or derived
         return self.dict[name]
 
+    def get(self, name, default):
+        if name not in self.variables:
+            return default
+        return self.dict[name]
+
     def __setitem__(self, name, value):
         if name not in self.variables:
             raise ValueError("Attempt to assign undefined variable %s" % name)          
@@ -344,11 +349,18 @@ def eval_xoomonk(ast, state):
             eval_xoomonk(node, state)
         return 0
     elif type == 'Assignment':
-        # XXX not the real deal yet.
         ref = ast.children[0]
-        name = ref.children[0].value
+        store_to_use = state
+        num_children = len(ref.children)
+        if num_children > 1:
+            i = 0
+            while i <= num_children - 2:
+                name = ref.children[i].value
+                store_to_use = store_to_use[name]
+                i += 1
+        name = ref.children[-1].value
         value = eval_xoomonk(ast.children[1], state)
-        state[name] = value
+        store_to_use[name] = value
         return value
     elif type == 'PrintString':
         sys.stdout.write(ast.value)
@@ -365,9 +377,16 @@ def eval_xoomonk(ast, state):
         sys.stdout.write('\n')
         return 0
     elif type == 'Ref':
-        # XXX not the real deal yet.
-        name = ast.children[0].value
-        return state.get(name, 0)
+        store_to_use = state
+        num_children = len(ast.children)
+        if num_children > 1:
+            i = 0
+            while i <= num_children - 2:
+                name = ast.children[i].value
+                store_to_use = store_to_use[name]
+                i += 1
+        name = ast.children[-1].value
+        return store_to_use.get(name, 0)
     elif type == 'IntLit':
         return ast.value
     elif type == 'Block':
