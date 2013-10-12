@@ -470,11 +470,51 @@ def open_dollar_store():
         store['result'] = store['x'] - store['y']
         return store
 
+    def mul(store):
+        store['result'] = store['x'] * store['y']
+        return store
+
+    def div(store):
+        store['result'] = store['x'] / store['y']
+        return store
+
+    def gt(store):
+        if store['x'] > store['y']:
+            store['result'] = 1
+        else:
+            store['result'] = 0
+
+    def not_(store):
+        if store['x'] == 0:
+            store['result'] = 1
+        else:
+            store['result'] = 0
+
+    def if_(store):
+        if store['cond'] != 0:
+            store['then']['x'] = store['cond']
+        else:
+            store['else']['x'] = store['cond']
+
+    def loop(store):
+        done = False
+        while not done:
+            do = store['do'].copy()
+            do['x'] = 0
+            done = (do['continue'] == 0)
+
     DOLLAR_STORE = {
         'add': MalingeringStore(['x', 'y', 'result'], ['x', 'y'], add),
         'sub': MalingeringStore(['x', 'y', 'result'], ['x', 'y'], sub),
+        'mul': MalingeringStore(['x', 'y', 'result'], ['x', 'y'], mul),
+        'div': MalingeringStore(['x', 'y', 'result'], ['x', 'y'], div),
+        'gt':  MalingeringStore(['x', 'y', 'result'], ['x', 'y'], gt),
+        'not': MalingeringStore(['x', 'y', 'result'], ['x', 'y'], not_),
+        'if':  MalingeringStore(['cond', 'then', 'else'],
+                                ['cond', 'then', 'else'], if_),
+        'loop':MalingeringStore(['do'], ['do'], loop),
     }
-    
+
 
 def main(argv):
     optparser = OptionParser(__doc__)

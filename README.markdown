@@ -395,20 +395,20 @@ it is nonzero, the process repeats, with another copy of the `do` store
 getting 0 assigned to its `x`, and so forth.
 
     | l := $.loop*
-    | counter := 5
+    | $.counter := 5
     | l.do := {
     |   y := x
-    |   print ^.counter
+    |   print $.counter
     |   o := $.sub*
-    |   o.x := ^.counter
+    |   o.x := $.counter
     |   o.y := 1
-    |   ^.counter := o.result
+    |   $.counter := o.result
     |   continue := o.result
     | }
     | print string "done!"
     = 5
     = 4
-    = 5
+    = 3
     = 2
     = 1
     = done!
