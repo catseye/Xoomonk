@@ -87,7 +87,7 @@ Empty blocks are permissible.
     = []
 
 Once a store has been created, only those variables defined in the store
-can be updated and accessed -- new variables cannot be added.
+can be updated and accessed — new variables cannot be added.
 
     | a := { b := 6 }
     | print a.c
