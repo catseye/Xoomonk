@@ -192,19 +192,22 @@ executed again.
     = [c=7,d=7]
     = [c=4,d=7]
 
-Variables cannot generally be accessed from an unsaturated store.
+Unassigned variables cannot be accessed from an unsaturated store.
 
     | a := {
     |   d := c
     | }
     | x := a.c
-    ? Attempt to access an unassigned variable
+    ? Attempt to access unassigned variable c
+
+Assigned variables can, but they have the value 0 until the store is
+saturated.
 
     | a := {
     |   d := c
     | }
-    | x := a.d
-    ? Attempt to access an unresolved variable
+    | print a.d
+    = 0
 
 This is true, even if the variable is assigned a constant expression
 inside the block.
@@ -213,8 +216,8 @@ inside the block.
     |   b := 7
     |   d := c
     | }
-    | x := a.b
-    ? Attempt to access an unresolved variable
+    | print a.b
+    = 0
 
 If, however, the unsaturated store contains some variables that have
 been updated since the store was created, those variable may be accessed.
@@ -236,17 +239,10 @@ defined somewhere in the block.
     |   d := c
     | }
     | a.b := 4
-    ? Attempt to assign an unresolved variable
+    ? Attempt to assign unresolved variable b
 
 A variable is considered unresolved even if it is assigned within the block,
 if that assignment takes place during or after its first use in an expresion.
-
-    | a := {
-    |   b := b
-    | }
-    | a.b := 5
-    | print a
-    = [b=5]
 
     | a := {
     |   print string "executing block"
@@ -260,6 +256,22 @@ if that assignment takes place during or after its first use in an expresion.
     = saturating store
     = executing block
     = [b=3,l=3]
+
+Hmm, not sure about this yet.
+
+    | a := {
+    |   c := b
+    | }
+    | a.b := 5
+    | print a
+    = [b=5,c=5]
+
+    | a := {
+    |   b := b
+    | }
+    | a.b := 5
+    | print a
+    ? Attempt to access unassigned variable b
 
 We now describe how this language is (we reasonably assume) Turing-complete.
 

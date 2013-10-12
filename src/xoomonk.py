@@ -281,7 +281,8 @@ class MalingeringStore(object):
     def __getitem__(self, name):
         if name not in self.variables:
             raise XoomonkError("Attempt to access undefined variable %s" % name)
-        # check to see if it is unassigned or derived
+        if name in self.unassigned:
+            raise XoomonkError("Attempt to access unassigned variable %s" % name)          
         return self.dict[name]
 
     def __setitem__(self, name, value):
