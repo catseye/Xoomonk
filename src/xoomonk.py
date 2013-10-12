@@ -269,15 +269,21 @@ class MalingeringStore(object):
     def run(self):
         self.fun(self)
 
-    def __getitem__(self, name):
-        if name not in self.variables:
-            raise ValueError("Attempt to access undefined variable %s" % name)
-        # check to see if it is unassigned or derived
-        return self.dict[name]
+    def copy(self):
+        # probably not entirely right
+        new = MalingeringStore(self.variables, self.unassigned, self.fun)
+        new.dict = self.dict.copy()
+        return new
 
     def get(self, name, default):
         if name not in self.variables:
             return default
+        return self.dict[name]
+
+    def __getitem__(self, name):
+        if name not in self.variables:
+            raise ValueError("Attempt to access undefined variable %s" % name)
+        # check to see if it is unassigned or derived
         return self.dict[name]
 
     def __setitem__(self, name, value):
@@ -389,6 +395,9 @@ def eval_xoomonk(ast, state):
         return store_to_use.get(name, 0)
     elif type == 'IntLit':
         return ast.value
+    elif type == 'CopyOf':
+        value = eval_xoomonk(ast.children[0], state)
+        return value.copy()
     elif type == 'Block':
         # OK!  What we need to do is to analyze the block to see what
         # variables in it are assigned values in it.        
