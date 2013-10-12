@@ -292,7 +292,11 @@ class MalingeringStore(object):
     def __str__(self):
         l = []
         for name in self.variables:
-            l.append("%s=%s" % (name, self.dict[name]))
+            if name in self.unassigned:
+                value = '?'
+            else:
+                value = self.dict[name]
+            l.append("%s=%s" % (name, value))
         return '[%s]' % ','.join(l)
 
 
@@ -385,8 +389,14 @@ def eval_xoomonk(ast, state):
         if assigned_variables >= used_variables:
             return eval_block(ast, state)
         else:
-            raise NotImplementedError, "Can't create malingering stores yet"
-            return create_malingering_store_from_block(ast)
+            all_variables = used_variables | assigned_variables
+            unassigned_variables = used_variables - assigned_variables
+            # this is soooooo not quite right yet.
+            store = MalingeringStore(
+                all_variables, unassigned_variables,
+                lambda store: eval_block(ast, state)
+            )
+            return store
     else:
         raise NotImplementedError, "not an AST type I know: %s" % type
 
