@@ -192,14 +192,6 @@ executed again.
     = [c=7,d=7]
     = [c=4,d=7]
 
-The main program is a block.  If it is unsaturated, no execution occurs
-at all.
-
-    | print string "hello"
-    | a := 14
-    | b := c
-    = 
-
 Variables cannot generally be accessed from an unsaturated store.
 
     | a := {
