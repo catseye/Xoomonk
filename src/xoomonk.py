@@ -27,43 +27,6 @@ class AST(object):
         return 'AST(%r,value=%r)' % (self.type, self.value)
 
 
-def eval_xoomonk(ast, state):
-    type = ast.type
-    if type == 'Program':
-        for node in ast.children:
-            eval_xoomonk(node, state)
-        return 0
-    elif type == 'Assignment':
-        # XXX not the real deal yet.
-        ref = ast.children[0]
-        name = ref.children[0].value
-        value = eval_xoomonk(ast.children[1], state)
-        state[name] = value
-        return value
-    elif type == 'PrintString':
-        sys.stdout.write(ast.value)
-    elif type == 'PrintChar':
-        value = eval_xoomonk(ast.children[0], state)
-        sys.stdout.write(chr(value))
-        return 0
-    elif type == 'Print':
-        value = eval_xoomonk(ast.children[0], state)
-        sys.stdout.write(str(value))
-        return 0
-    elif type == 'Newline':
-        eval_xoomonk(ast.children[0], state)
-        sys.stdout.write('\n')
-        return 0
-    elif type == 'Ref':
-        # XXX not the real deal yet.
-        name = ast.children[0].value
-        return state.get(name, 0)
-    elif type == 'IntLit':
-        return ast.value
-    else:
-        raise NotImplementedError, "not an AST type I know: %s" % type
-
-
 class Scanner(object):
     """A Scanner provides facilities for extracting successive
     Xoomonk tokens from a string.
@@ -325,6 +288,43 @@ class MalingeringStore(object):
         else:
             # the store is saturated, do what you want
             self.dict[name] = value
+
+
+def eval_xoomonk(ast, state):
+    type = ast.type
+    if type == 'Program':
+        for node in ast.children:
+            eval_xoomonk(node, state)
+        return 0
+    elif type == 'Assignment':
+        # XXX not the real deal yet.
+        ref = ast.children[0]
+        name = ref.children[0].value
+        value = eval_xoomonk(ast.children[1], state)
+        state[name] = value
+        return value
+    elif type == 'PrintString':
+        sys.stdout.write(ast.value)
+    elif type == 'PrintChar':
+        value = eval_xoomonk(ast.children[0], state)
+        sys.stdout.write(chr(value))
+        return 0
+    elif type == 'Print':
+        value = eval_xoomonk(ast.children[0], state)
+        sys.stdout.write(str(value))
+        return 0
+    elif type == 'Newline':
+        eval_xoomonk(ast.children[0], state)
+        sys.stdout.write('\n')
+        return 0
+    elif type == 'Ref':
+        # XXX not the real deal yet.
+        name = ast.children[0].value
+        return state.get(name, 0)
+    elif type == 'IntLit':
+        return ast.value
+    else:
+        raise NotImplementedError, "not an AST type I know: %s" % type
 
 
 def main(argv):
