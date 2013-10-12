@@ -301,7 +301,7 @@ class MalingeringStore(object):
 
     def __str__(self):
         l = []
-        for name in self.variables:
+        for name in sorted(self.variables):
             if name in self.unassigned:
                 value = '?'
             else:

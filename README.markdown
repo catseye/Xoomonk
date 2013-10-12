@@ -282,11 +282,12 @@ store themselves.  One uses the `$` prefix operator to access this global
 namespace.
 
     | print $add
+    = [result=0,x=?,y=?]
+
     | $add.x := 3
     | $add.y := 5
     | print $add.result
     | print $add
-    = [x=?,y=?,result=0]
     = 8
     = [x=3,y=5,result=8]
 
