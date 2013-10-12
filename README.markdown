@@ -97,6 +97,13 @@ can be updated and accessed — new variables cannot be added.
     | a.c := 12
     ? Attempt to assign undefined variable c
 
+In the outermost level, as well, a variable cannot be used before it
+has been assigned.
+
+    | print r
+    | r := 5
+    ? Attempt to access undefined variable r
+
 Stores and integers are the only two data types in Xoomonk.  However, there
 are some special forms of the print statement, demonstrated here, which
 allow for textual output.
@@ -135,23 +142,6 @@ the store which was in effect when the this store was defined.
     = 14
     = 12
 
-As long as a variable is assigned somewhere in a block, it can be accessed
-before it is first assigned.  In this case, it will hold the integer value 0.
-It need not stay an integer, for typing is dynamic.
-
-    | b := {
-    |   print a
-    |   a := 12
-    |   print a
-    |   a := { c := 13 }
-    |   print a
-    | }
-    | print b
-    = 0
-    = 12
-    = [c=13]
-    = [a=[c=13]]
-
 We now present today's main feature.
 
 It's important to understand that a block need not define all the
@@ -170,10 +160,6 @@ _unsaturated store_.
     | }
     | print a
     = [c=?,d=0]
-
-Note that, consistent with variables that are assigned to a block initially
-getting the value 0, the variable `d` in the above example is shown to be
-0 when the block is still unsaturated.
 
 An unsaturated store behaves similarly to a saturated store in certain
 respects.  In particular, unsaturated stores can be updated.  If doing

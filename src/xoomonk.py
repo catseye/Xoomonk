@@ -9,6 +9,10 @@ import re
 import sys
 
 
+class XoomonkError(ValueError):
+    pass
+
+
 class AST(object):
     def __init__(self, type, children=None, value=None):
         self.type = type
@@ -74,7 +78,6 @@ class Scanner(object):
             self.type = type
             self.token = match.group(token_group)
             self.text = match.group(rest_group)
-            #print >>sys.stderr, "(%r/%s->%r)" % (self.token, self.type, self.text)
             return True
 
     def scan(self):
@@ -277,20 +280,20 @@ class MalingeringStore(object):
 
     def __getitem__(self, name):
         if name not in self.variables:
-            raise ValueError("Attempt to access undefined variable %s" % name)
+            raise XoomonkError("Attempt to access undefined variable %s" % name)
         # check to see if it is unassigned or derived
         return self.dict[name]
 
     def __setitem__(self, name, value):
         if name not in self.variables:
-            raise ValueError("Attempt to assign undefined variable %s" % name)          
+            raise XoomonkError("Attempt to assign undefined variable %s" % name)          
         if name in self.unassigned:
             self.dict[name] = value
             self.unassigned.remove(name)
             if not self.unassigned:
                 self.run()
         elif self.unassigned:
-            raise ValueError("Attempt to assign unresolved variable %s" % name)          
+            raise XoomonkError("Attempt to assign unresolved variable %s" % name)          
         else:
             # the store is saturated, do what you want
             self.dict[name] = value
@@ -387,7 +390,10 @@ def eval_xoomonk(ast, state):
                 store_to_use = store_to_use[name]
                 i += 1
         name = ast.children[-1].value
-        return store_to_use[name]
+        try:
+            return store_to_use[name]
+        except KeyError as e:
+            raise XoomonkError('Attempt to access undefined variable %s' % name)
     elif type == 'IntLit':
         return ast.value
     elif type == 'CopyOf':
@@ -414,10 +420,9 @@ def eval_xoomonk(ast, state):
         else:
             all_variables = used_variables | assigned_variables
             unassigned_variables = used_variables - assigned_variables
-            # this is soooooo not quite right yet.
             store = MalingeringStore(
                 all_variables, unassigned_variables,
-                lambda store: eval_block(ast, state)
+                lambda self: eval_malingered_block(ast, self)
             )
             return store
     else:
@@ -434,11 +439,21 @@ def eval_block(block, enclosing_state):
     return store
 
 
+def eval_malingered_block(block, store):
+    for child in block.children:
+        value = eval_xoomonk(child, store)
+    return store
+
+
 def main(argv):
     optparser = OptionParser(__doc__)
     optparser.add_option("-a", "--show-ast",
                          action="store_true", dest="show_ast", default=False,
                          help="show parsed AST before evaluation")
+    optparser.add_option("-e", "--raise-exceptions",
+                         action="store_true", dest="raise_exceptions",
+                         default=False,
+                         help="don't convert exceptions to error messages")
     optparser.add_option("-t", "--test",
                          action="store_true", dest="test", default=False,
                          help="run test cases and exit")
@@ -460,7 +475,9 @@ def main(argv):
         print repr(ast)
     try:
         result = eval_xoomonk(ast, {})
-    except ValueError as e:
+    except XoomonkError as e:
+        if options.raise_exceptions:
+            raise
         print >>sys.stderr, str(e)
         sys.exit(1)
     sys.exit(0)

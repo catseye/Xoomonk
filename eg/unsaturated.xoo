@@ -1,0 +1,8 @@
+a := {
+  print string "executing block"
+  print c
+  d := c
+}
+print a
+a.c := 7
+print a
