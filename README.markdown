@@ -130,18 +130,6 @@ inner block.
     = 12
     = 14
 
-The special identifier `^` refers to the lexically enclosing store, that is,
-the store which was in effect when the this store was defined.
-
-    | a := 14
-    | b := {
-    |   a := 12
-    |   print ^.a
-    | }
-    | print b.a
-    = 14
-    = 12
-
 We now present today's main feature.
 
 It's important to understand that a block need not define all the
@@ -200,8 +188,8 @@ Unassigned variables cannot be accessed from an unsaturated store.
     | x := a.c
     ? Attempt to access unassigned variable c
 
-Assigned variables can, but they have the value 0 until the store is
-saturated.
+Assigned variables can be accessed from an unsaturated store, but they have
+the value 0 until the store is saturated.
 
     | a := {
     |   d := c
@@ -231,33 +219,30 @@ been updated since the store was created, those variable may be accessed.
     | print a.q
     = 7
 
-Nor is it possible to assign a variable in an unsaturated store which is
-defined somewhere in the block.
+It is possible to assign a variable in an unsaturated store which is
+assigned somewhere in the block.
 
     | a := {
     |   b := 7
     |   d := c
     | }
     | a.b := 4
-    ? Attempt to assign unresolved variable b
-
-A variable is considered unresolved even if it is assigned within the block,
-if that assignment takes place during or after its first use in an expresion.
+    | print a
+    = [b=4,c=?,d=0]
 
     | a := {
-    |   print string "executing block"
-    |   l := b
-    |   b := 3
-    |   l := 3
+    |   b := 7
+    |   d := c
     | }
-    | print string "saturating store"
-    | a.b := 5
+    | a.b := 4
+    | a.c := 4
     | print a
-    = saturating store
-    = executing block
-    = [b=3,l=3]
+    = [b=7,c=4,d=4]
 
-Hmm, not sure about this yet.
+It's important to note that a block is considered saturated when all the
+variables used in the block are assigned somewhere in the block.  If, in a
+block, a variable is used before it is assigned, the block will still be
+executed, if saturated.
 
     | a := {
     |   c := b
@@ -269,9 +254,36 @@ Hmm, not sure about this yet.
     | a := {
     |   b := b
     | }
+    ? Attempt to access undefined variable b
+
+A way to work around this is to add an extra unassigned variable, to keep
+the store unsaturated.
+
+    | a := {
+    |   print string "executing block"
+    |   l := b
+    |   b := 3
+    |   l := 3
+    | }
+    | print string "saturating store"
     | a.b := 5
     | print a
-    ? Attempt to access unassigned variable b
+    ? Attempt to access undefined variable b
+
+    | a := {
+    |   print string "executing block"
+    |   l := b
+    |   b := 3
+    |   l := c
+    |   l := 3
+    | }
+    | print string "saturating store"
+    | a.b := 5
+    | a.c := 9
+    | print a
+    = saturating store
+    = executing block
+    = [b=3,c=9,l=3]
 
 We now describe how this language is (we reasonably assume) Turing-complete.
 

@@ -248,15 +248,15 @@ class MalingeringStore(object):
     >>> a['c'] = 7
     Traceback (most recent call last):
     ...
-    ValueError: Attempt to assign undefined variable c
+    XoomonkError: Attempt to assign undefined variable c
     >>> a = MalingeringStore(['a','b'], ['a'], demo)
     >>> a['a'] = 7
     demo!
-    >>> a = MalingeringStore(['a','b'], ['a'], demo)
-    >>> a['b'] = 7
+    >>> a = MalingeringStore(['a','b'], ['b'], demo)
+    >>> a['b']
     Traceback (most recent call last):
     ...
-    ValueError: Attempt to assign unresolved variable b
+    XoomonkError: Attempt to access unassigned variable b
 
     """
     def __init__(self, variables, unassigned, fun):
@@ -293,10 +293,9 @@ class MalingeringStore(object):
             self.unassigned.remove(name)
             if not self.unassigned:
                 self.run()
-        elif self.unassigned:
-            raise XoomonkError("Attempt to assign unresolved variable %s" % name)          
         else:
-            # the store is saturated, do what you want
+            # either the variable being set is assigned within the
+            # block, or the store is saturated, so go ahead
             self.dict[name] = value
 
     def __str__(self):
