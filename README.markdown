@@ -313,7 +313,7 @@ to, but which can be modified.
     | print $.add.result
     | print $.add
     = 8
-    = [x=3,y=5,result=8]
+    = [result=8,x=3,y=5]
 
 Because using a built-in operation store in this way saturates it, it cannot
 be used again.  Typically you want to make a copy of the store first, and use

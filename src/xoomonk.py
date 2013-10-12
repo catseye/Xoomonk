@@ -325,7 +325,9 @@ def find_used_variables(ast, s):
     elif type == 'Newline':
         find_used_variables(ast.children[0], s)
     elif type == 'Ref':
-        s.add(ast.children[0].value)
+        name = ast.children[0].value
+        if name != '$':
+            s.add(name)
     elif type == 'Block':
         for child in ast.children:
             find_used_variables(child, s)
