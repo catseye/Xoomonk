@@ -289,6 +289,49 @@ class MalingeringStore(object):
             # the store is saturated, do what you want
             self.dict[name] = value
 
+    def __str__(self):
+        l = []
+        for name in self.variables:
+            l.append("%s=%s" % (name, self.dict[name]))
+        return '[%s]' % ','.join(l)
+
+
+# Analysis
+
+def find_used_variables(ast, s):
+    type = ast.type
+    if type == 'Program':
+        for child in ast.children:
+            find_used_variables(child, s)
+    elif type == 'Assignment':
+        find_used_variables(ast.children[1], s)
+    elif type == 'PrintChar':
+        find_used_variables(ast.children[1], s)
+    elif type == 'Print':
+        find_used_variables(ast.children[0], s)
+    elif type == 'Newline':
+        find_used_variables(ast.children[0], s)
+    elif type == 'Ref':
+        s.add(ast.children[0].value)
+    elif type == 'Block':
+        for child in ast.children:
+            find_used_variables(child, s)
+
+
+def find_assigned_variables(ast, s):
+    type = ast.type
+    if type == 'Program':
+        for child in ast.children:
+            find_assigned_variables(child, s)
+    elif type == 'Assignment':
+        name = ast.children[0].children[0].value
+        s.add(name)
+    elif type == 'Block':
+        for child in ast.children:
+            find_assigned_variables(child, s)
+
+
+# Evaluation
 
 def eval_xoomonk(ast, state):
     type = ast.type
@@ -323,8 +366,36 @@ def eval_xoomonk(ast, state):
         return state.get(name, 0)
     elif type == 'IntLit':
         return ast.value
+    elif type == 'Block':
+        # OK!  What we need to do is to analyze the block to see what
+        # variables in it are assigned values in it.        
+        # If all variables in the block are assigned values somewhere
+        # in the block, it is a saturated store, and we can evaluate
+        # the code in it immediately.
+        # If not, we create a MalingeringStore, and associate the
+        # code of the block with it.  This object will cause the code
+        # of the block to be executed when the store finally does
+        # become saturated through assignments.
+
+        used_variables = set()
+        find_used_variables(ast, used_variables)
+        assigned_variables = set()
+        find_assigned_variables(ast, assigned_variables)
+
+        if used_variables == assigned_variables:
+            return eval_block(ast, state)
+        else:
+            raise NotImplementedError, "Can't create malingering stores yet"
+            return create_malingering_store_from_block(ast)
     else:
         raise NotImplementedError, "not an AST type I know: %s" % type
+
+
+def eval_block(block, enclosing_state):
+    state = {}
+    for child in block.children:
+        value = eval_xoomonk(child, state)
+    return MalingeringStore(state.keys(), [], lambda store: store)
 
 
 def main(argv):
