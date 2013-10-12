@@ -9,6 +9,9 @@ import re
 import sys
 
 
+DOLLAR_STORE = None
+
+
 class XoomonkError(ValueError):
     pass
 
@@ -222,10 +225,7 @@ class Parser(object):
         if self.scanner.consume("^"):
             return AST('Upvalue')
         elif self.scanner.consume("$"):
-            self.scanner.check_type("identifier")
-            id = self.scanner.token
-            self.scanner.scan()
-            return AST('Dollar', value=id)
+            return AST('Identifier', value='$')
         else:
             self.scanner.check_type("identifier")
             id = self.scanner.token
@@ -361,9 +361,14 @@ def eval_xoomonk(ast, state):
             i = 0
             while i <= num_children - 2:
                 name = ref.children[i].value
-                store_to_use = store_to_use[name]
+                if name == '$':
+                    store_to_use = DOLLAR_STORE
+                else:
+                    store_to_use = store_to_use[name]
                 i += 1
         name = ref.children[-1].value
+        if name == '$':
+            raise XoomonkError('Cannot assign to $')
         value = eval_xoomonk(ast.children[1], state)
         store_to_use[name] = value
         return value
@@ -388,13 +393,19 @@ def eval_xoomonk(ast, state):
             i = 0
             while i <= num_children - 2:
                 name = ast.children[i].value
-                store_to_use = store_to_use[name]
+                if name == '$':
+                    store_to_use = DOLLAR_STORE
+                else:
+                    store_to_use = store_to_use[name]
                 i += 1
         name = ast.children[-1].value
-        try:
-            return store_to_use[name]
-        except KeyError as e:
-            raise XoomonkError('Attempt to access undefined variable %s' % name)
+        if name == '$':
+            return DOLLAR_STORE
+        else:
+            try:
+                return store_to_use[name]
+            except KeyError as e:
+                raise XoomonkError('Attempt to access undefined variable %s' % name)
     elif type == 'IntLit':
         return ast.value
     elif type == 'CopyOf':
@@ -446,6 +457,23 @@ def eval_malingered_block(block, store):
     return store
 
 
+def open_dollar_store():
+    global DOLLAR_STORE
+
+    def add(store):
+        store['result'] = store['x'] + store['y']
+        return store
+
+    def sub(store):
+        store['result'] = store['x'] - store['y']
+        return store
+
+    DOLLAR_STORE = {
+        'add': MalingeringStore(['x', 'y', 'result'], ['x', 'y'], add),
+        'sub': MalingeringStore(['x', 'y', 'result'], ['x', 'y'], sub),
+    }
+    
+
 def main(argv):
     optparser = OptionParser(__doc__)
     optparser.add_option("-a", "--show-ast",
@@ -474,6 +502,7 @@ def main(argv):
     ast = p.program()
     if options.show_ast:
         print repr(ast)
+    open_dollar_store()
     try:
         result = eval_xoomonk(ast, {})
     except XoomonkError as e:

@@ -277,17 +277,29 @@ We now describe how this language is (we reasonably assume) Turing-complete.
 
 Operations are accomplished with certain built-in unsaturated stores.  For
 example, there is a store called `add`, which can be used for addition.  These
-built-in stores are globally available; they do not exist in any particular
-store themselves.  One uses the `$` prefix operator to access this global
-namespace.
+built-in stores are all located in the special store `$`, which is a Special
+Name which is magically available in every scope and which cannot be assigned
+to, but which can be modified.
 
-    | print $add
+    | print $.add
     = [result=0,x=?,y=?]
 
-    | $add.x := 3
-    | $add.y := 5
-    | print $add.result
-    | print $add
+    | a := {
+    |   print $.add
+    | }
+    = [result=0,x=?,y=?]
+
+    | $ := 4
+    ? Cannot assign to $
+
+    | $.foo := 4
+    | print string "ok"
+    = ok
+
+    | $.add.x := 3
+    | $.add.y := 5
+    | print $.add.result
+    | print $.add
     = 8
     = [x=3,y=5,result=8]
 
@@ -295,27 +307,27 @@ Because using a built-in operation store in this way saturates it, it cannot
 be used again.  Typically you want to make a copy of the store first, and use
 that, leaving the built-in store unmodified.
 
-    | o1 := $add*
+    | o1 := $.add*
     | o1.x := 4
     | o1.y := 7
-    | o2 := $add*
+    | o2 := $.add*
     | o2.x := o1.result
     | o2.y := 9
     | print o2.result
     = 20
 
 Since Xoomonk is not a strictly minimalist language, there is a selection
-of built-in stores which provide useful operations: `$add`, `$sub`, `$mul`,
-`$div`, `$gt`, and `$not`.
+of built-in stores which provide useful operations: `$.add`, `$.sub`, `$.mul`,
+`$.div`, `$.gt`, and `$.not`.
 
-Decision-making is also accomplished with a built-in store, `if`.  This store
+Decision-making is also accomplished with a built-in store, `$.if`.  This store
 contains variables caled `cond`, `then`, and `else`.  `cond` should
 be an integer, and `then` and `else` should be unsaturated stores where `x` is
 unassigned.  When the first three are assigned values, if `cond` is nonzero,
 it is assigned to `x` in the `then` store; otherwise, if it is zero, it is
 assigned to `x` in the `else` store.
 
-    | o1 := $if*
+    | o1 := $.if*
     | o1.then := {
     |   y := x
     |   print string "condition is true"
@@ -327,7 +339,7 @@ assigned to `x` in the `else` store.
     | o1.cond := 0
     = condition is false
 
-    | o1 := $if*
+    | o1 := $.if*
     | o1.then := {
     |   y := x
     |   print string "condition is true"
@@ -339,7 +351,7 @@ assigned to `x` in the `else` store.
     | o1.cond := 1
     = condition is true
 
-Repetition is also accomplished with a built-in store, `loop`.  This store
+Repetition is also accomplished with a built-in store, `$.loop`.  This store
 contains an unassigned variable called `do`.  When it is assigned a value,
 assumed to be an unsaturated store, a copy of it is made.  The variable
 `x` inside that copy is assigned the value 0.  This is supposed to saturate
@@ -347,12 +359,12 @@ the store.  The variable `continue` is then accessed from the store.  If
 it is nonzero, the process repeats, with another copy of the `do` store
 getting 0 assigned to its `x`, and so forth.
 
-    | l := $loop*
+    | l := $.loop*
     | counter := 5
     | l.do := {
     |   y := x
     |   print ^.counter
-    |   o := $sub*
+    |   o := $.sub*
     |   o.x := ^.counter
     |   o.y := 1
     |   ^.counter := o.result
@@ -366,9 +378,9 @@ getting 0 assigned to its `x`, and so forth.
     = 1
     = done!
 
-Because the `loop` construct will always execute the `do` store at least once
+Because the `$.loop` construct will always execute the `do` store at least once
 (even assuming its only unassigned variable is `x`), it acts like a so-called
-`repeat` loop.  It can be used in conjunction with `if` to simulate a
+`repeat` loop.  It can be used in conjunction with `$.if` to simulate a
 so-called `while` loop.  With this loop, the built-in operations provided,
 and variables which may contain unbounded integer values, Xoomonk should
 be uncontroversially Turing-complete.
@@ -377,13 +389,13 @@ Finally, there is no provision for defining functions or procedures, because
 malingering stores can act as these constructs.
 
     | perimeter := {
-    |   o1 := $mul*
+    |   o1 := $.mul*
     |   o1.x := x
     |   o1.y := 2
-    |   o2 := $mul*
+    |   o2 := $.mul*
     |   o2.x := y
     |   o2.y := 2
-    |   o3 := $add*
+    |   o3 := $.add*
     |   o3.x := o1.result
     |   o3.y := o2.result
     |   result := o3.result
@@ -409,7 +421,7 @@ Grammar
     Expr    ::= (Block | Ref | Const) ["*"].
     Block   ::= "{" { Stmt } "}".
     Ref     ::= Name {"." Name}.
-    Name    ::= "^" | "$" <alphanumeric> | <alphanumeric>.
+    Name    ::= "^" | "$" | <alphanumeric>.
     Const   ::= <integer-literal>.
 
 Discussion
