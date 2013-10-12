@@ -91,11 +91,11 @@ can be updated and accessed — new variables cannot be added.
 
     | a := { b := 6 }
     | print a.c
-    ? Attempt to access an undefined variable
+    ? Attempt to access undefined variable c
 
     | a := { b := 6 }
     | a.c := 12
-    ? Attempt to assign an undefined variable
+    ? Attempt to assign undefined variable c
 
 Stores and integers are the only two data types in Xoomonk.  However, there
 are some special forms of the print statement, demonstrated here, which

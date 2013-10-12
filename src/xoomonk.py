@@ -275,11 +275,6 @@ class MalingeringStore(object):
         new.dict = self.dict.copy()
         return new
 
-    def get(self, name, default):
-        if name not in self.variables:
-            return default
-        return self.dict[name]
-
     def __getitem__(self, name):
         if name not in self.variables:
             raise ValueError("Attempt to access undefined variable %s" % name)
@@ -392,7 +387,7 @@ def eval_xoomonk(ast, state):
                 store_to_use = store_to_use[name]
                 i += 1
         name = ast.children[-1].value
-        return store_to_use.get(name, 0)
+        return store_to_use[name]
     elif type == 'IntLit':
         return ast.value
     elif type == 'CopyOf':
@@ -463,7 +458,11 @@ def main(argv):
     ast = p.program()
     if options.show_ast:
         print repr(ast)
-    result = eval_xoomonk(ast, {})
+    try:
+        result = eval_xoomonk(ast, {})
+    except ValueError as e:
+        print >>sys.stderr, str(e)
+        sys.exit(1)
     sys.exit(0)
 
 
