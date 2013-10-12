@@ -169,7 +169,11 @@ _unsaturated store_.
     |   d := c
     | }
     | print a
-    = [c=?,d=*]
+    = [c=?,d=0]
+
+Note that, consistent with variables that are assigned to a block initially
+getting the value 0, the variable `d` in the above example is shown to be
+0 when the block is still unsaturated.
 
 An unsaturated store behaves similarly to a saturated store in certain
 respects.  In particular, unsaturated stores can be updated.  If doing
@@ -185,7 +189,7 @@ this bears some resemblance to lazy evaluation (thus the term _malingering_).
     | print a
     | a.c := 7
     | print a
-    = [c=?,d=*]
+    = [c=?,d=0]
     = executing block
     = [c=7,d=7]
 
@@ -292,7 +296,7 @@ namespace.
     | $add.y := 5
     | print $add.result
     | print $add
-    = [x=?,y=?,result=*]
+    = [x=?,y=?,result=0]
     = 8
     = [x=3,y=5,result=8]
 
