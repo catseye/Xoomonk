@@ -180,6 +180,29 @@ executed again.
     = [c=7,d=7]
     = [c=4,d=7]
 
+Saturating one copy of an unsaturated block will not saturate the other
+copy.
+
+    | a := {
+    |   print string "saturated"
+    |   d := c
+    | }
+    | b := a*
+    | print a
+    | print b
+    | a.c := 7
+    | print a
+    | print b
+    | b.c := 5
+    | print b
+    = [c=?,d=0]
+    = [c=?,d=0]
+    = saturated
+    = [c=7,d=7]
+    = [c=?,d=0]
+    = saturated
+    = [c=5,d=5]
+
 Unassigned variables cannot be accessed from an unsaturated store.
 
     | a := {

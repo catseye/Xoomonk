@@ -273,8 +273,9 @@ class MalingeringStore(object):
         self.fun(self)
 
     def copy(self):
-        # probably not entirely right
-        new = MalingeringStore(self.variables, self.unassigned, self.fun)
+        new = MalingeringStore(
+            set(self.variables), set(self.unassigned), self.fun
+        )
         new.dict = self.dict.copy()
         return new
 
