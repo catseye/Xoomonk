@@ -382,7 +382,7 @@ def eval_xoomonk(ast, state):
         assigned_variables = set()
         find_assigned_variables(ast, assigned_variables)
 
-        if used_variables == assigned_variables:
+        if assigned_variables >= used_variables:
             return eval_block(ast, state)
         else:
             raise NotImplementedError, "Can't create malingering stores yet"
@@ -395,7 +395,10 @@ def eval_block(block, enclosing_state):
     state = {}
     for child in block.children:
         value = eval_xoomonk(child, state)
-    return MalingeringStore(state.keys(), [], lambda store: store)
+    store = MalingeringStore(state.keys(), [], lambda store: store)
+    for varname in state:
+        store[varname] = state[varname]
+    return store
 
 
 def main(argv):
