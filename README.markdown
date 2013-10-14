@@ -1,7 +1,7 @@
 The Xoomonk Programming Language
 ================================
 
-Language version 1.0-PRE
+Language version 1.0
 
 Abstract
 --------
@@ -531,15 +531,15 @@ Xoomonk, quite unlike Bla, is an imperative language; once created, a store
 may be updated at any point.  And, of course, this property is exploited in
 the introduction of malingering stores.
 
-Xoomonk originally had an infix operator `&`, which takes two stores as its
-arguments, at least one of which must be saturated, and evaluates to a third
-store which is the result of merging the two argument stores.  This result store
-may be saturated even if only one of the argument stores was saturated, if
-the saturated store gave all the values that the unsaturated store needed.
-This operator was dropped because it is mostly syntactic sugar for assigning
-each of the desired variables from one store to the other.  However, it does
-admittedly provide a very natural syntax, which orthogonally includes "named
-arguments", when using unsaturated stores as procedures:
+The original idea for Xoomonk had an infix operator `&`, which took two stores
+as its arguments (at least one of which must be saturated) and evaluated to a
+third store which was the result of merging the two argument stores.  This
+result store may be saturated even if only one of the argument stores was
+saturated, if the saturated store gave all the values that the unsaturated
+store needed.  This operator was dropped because it is mostly just syntactic
+sugar for assigning each of the desired variables from one store to the other.
+However, it does admittedly provide a very natural syntax, which orthogonally
+includes "named arguments", when using unsaturated stores as procedures:
 
     perimeter = {
       # see example above
@@ -547,17 +547,29 @@ arguments", when using unsaturated stores as procedures:
     g := perimeter* & { x := 13 y := 6 }
     print g.result
 
-Xoomonk 0.1 had slightly more sophisticated semantics for unsaturated stores.
-(TODO: describe them here.)  `$` was an prefix operator rather than a
-Special Name, but having `$` refer to a global namespace was both simpler and
-allowed the Special Name `^` for accessing the lexically enclosing store to be
-removed.
+Xoomonk 0.1 had slightly more sophisticated semantics for unsaturated stores
+than Xoomonk 1.0 has.  Specifically, there was a (fuzzy) idea that a variable
+could be "unresolved", that is, assigned a value derived from variables which
+were unassigned.  Xoomonk 1.0 simplified this to assigned variables having
+the value 0 until the store is saturated, and a store being saturated when
+all of its unassigned variables have been given a value, even if some
+assigned variables are used in the block before they have ever been assigned.
+Xoomonk 1.0 also dropped the idea that the main program was a block.
 
-Xoomonk, as a project, is also an experiment in _test-driven language
-design_.  As you can see, I've described the language with a series of
-examples, written in (something close to) Falderal format, each of which
-could be used as a test case.  This should make implementing an interpreter
-or compiler for the language much easier, when I get around to that.
+In addition, in Xoomonk 0.1, `$` was an prefix operator rather than a
+Special Name, and the Special Name `^` allowed access to the lexically
+enclosing store of a block.  While there is a certain elegance to this, it
+was deemed overkill, and in Xoomonk 1.0, `$` was changed to a Special Name
+which referred to a global store (which can be used to communicate values
+between scopes without messing about with lexically enclosing "upvalues".)
+
+Xoomonk, as a project, was also an early experiment in _test-driven language
+design_.  When Xoomonk 0.1 was released, the language was described only with
+the set of examples (above) written in Falderal format, each of which both
+illustrates some aspect of the language, and is used as a test case.  When a
+reference interpreter was implemented for Xoomonk 1.0, this made implementation
+much easier.  (Since Xoomonk 0.1 was released, I've used this technique
+successfully for several other languages as well.)
 
 Happy malingering!
 

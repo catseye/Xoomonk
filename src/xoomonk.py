@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-"""An attempt to implement Xoomonk in Python.
+"""Reference interpreter for Xoomonk 1.0.
 
 """
 
