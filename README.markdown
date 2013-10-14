@@ -449,11 +449,11 @@ assigned to `x` in the `else` store.
 
 Repetition is also accomplished with a built-in store, `$.loop`.  This store
 contains an unassigned variable called `do`.  When it is assigned a value,
-assumed to be an unsaturated store, a copy of it is made.  The variable
-`x` inside that copy is assigned the value 0.  This is supposed to saturate
-the store.  The variable `continue` is then accessed from the store.  If
-it is nonzero, the process repeats, with another copy of the `do` store
-getting 0 assigned to its `x`, and so forth.
+assumed to be an unsaturated store, a copy of that unsaturated store is made.
+The variable `x` inside that copy is assigned the value 0.  This is supposed
+to saturate the store.  The variable `continue` is then accessed from the
+store.  If it is nonzero, the process repeats, with another copy of the `do`
+store getting 0 assigned to its `x`, and so forth.
 
     | l := $.loop*
     | $.counter := 5
@@ -479,7 +479,9 @@ Because the `$.loop` construct will always execute the `do` store at least once
 `repeat` loop.  It can be used in conjunction with `$.if` to simulate a
 so-called `while` loop.  With this loop, the built-in operations provided,
 and variables which may contain unbounded integer values, Xoomonk should
-be uncontroversially Turing-complete.
+be uncontroversially Turing-complete.  (Although admittedly, using an unbounded
+integer or two to simulate a Turing machine's tape, especially with Xoomonk's
+arithmetic operations, would be fairly cumbersome.)
 
 Finally, there is no provision for defining functions or procedures, because
 malingering stores can act as these constructs.
@@ -517,7 +519,7 @@ Grammar
     Expr    ::= (Block | Ref | Const) ["*"].
     Block   ::= "{" { Stmt } "}".
     Ref     ::= Name {"." Name}.
-    Name    ::= "^" | "$" | <alphanumeric>.
+    Name    ::= "$" | <alphanumeric>.
     Const   ::= <integer-literal>.
 
 Discussion
@@ -544,6 +546,12 @@ arguments", when using unsaturated stores as procedures:
     }
     g := perimeter* & { x := 13 y := 6 }
     print g.result
+
+Xoomonk 0.1 had slightly more sophisticated semantics for unsaturated stores.
+(TODO: describe them here.)  `$` was an prefix operator rather than a
+Special Name, but having `$` refer to a global namespace was both simpler and
+allowed the Special Name `^` for accessing the lexically enclosing store to be
+removed.
 
 Xoomonk, as a project, is also an experiment in _test-driven language
 design_.  As you can see, I've described the language with a series of

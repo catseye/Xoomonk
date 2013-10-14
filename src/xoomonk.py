@@ -89,7 +89,7 @@ class Scanner(object):
             self.token = None
             self.type = 'EOF'
             return
-        if self.scan_pattern(r':=|\;|\{|\}|\*|\.|\^|\$', 'operator'):
+        if self.scan_pattern(r':=|\;|\{|\}|\*|\.|\$', 'operator'):
             return
         if self.scan_pattern(r'\d+', 'integer literal'):
             return
@@ -222,9 +222,7 @@ class Parser(object):
         return r
 
     def name(self):
-        if self.scanner.consume("^"):
-            return AST('Upvalue')
-        elif self.scanner.consume("$"):
+        if self.scanner.consume("$"):
             return AST('Identifier', value='$')
         else:
             self.scanner.check_type("identifier")
