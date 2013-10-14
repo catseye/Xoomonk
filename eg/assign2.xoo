@@ -1,8 +1,0 @@
-a := {
-  c := 5
-  d := c
-}
-print a
-print a.d
-a.c := 7
-print a

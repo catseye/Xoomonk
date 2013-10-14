@@ -1,0 +1,27 @@
+l := $.loop*
+$.bottles := 99
+l.do := {
+  y := x
+  print $.bottles;
+  print string " bottles of beer on the wall,"
+  print $.bottles;
+  print string " bottles of beer,"
+  print string "Take one down, pass it around,"  
+  o := $.sub*
+  o.x := $.bottles
+  o.y := 1
+  $.bottles := o.result
+  i := $.if*
+  i.then := {
+    y := x
+    print $.bottles;
+  }
+  i.else := {
+    y := x
+    print string "No more";
+  }
+  i.cond := $.bottles
+  print string " bottles of beer on the wall."
+  print string ""
+  continue := o.result
+}
