@@ -509,7 +509,7 @@ def open_dollar_store():
         'mul': MalingeringStore(['x', 'y', 'result'], ['x', 'y'], mul),
         'div': MalingeringStore(['x', 'y', 'result'], ['x', 'y'], div),
         'gt':  MalingeringStore(['x', 'y', 'result'], ['x', 'y'], gt),
-        'not': MalingeringStore(['x', 'y', 'result'], ['x', 'y'], not_),
+        'not': MalingeringStore(['x', 'result'], ['x'], not_),
         'if':  MalingeringStore(['cond', 'then', 'else'],
                                 ['cond', 'then', 'else'], if_),
         'loop':MalingeringStore(['do'], ['do'], loop),

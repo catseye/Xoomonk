@@ -1,7 +1,7 @@
 The Xoomonk Programming Language
 ================================
 
-Language version 0.1 Pretty Much Complete But Maybe Not Totally Finalized
+Language version 1.0-PRE
 
 Abstract
 --------
@@ -21,15 +21,16 @@ Description
 
 Overall, Xoomonk looks like a "typical" imperative language.  The result
 of evaluating an expression can be assigned to a variable, and the contents
-of a variable can be used in a further expression.
+of a variable can be used in a subsequent expression.
 
     | a := 1
     | b := a
     | print b
     = 1
 
-However, blocks of these imperative statements can appear as terms in
-expressions; such blocks evaluate to entire updatable stores.
+Like most typical imperative languages, a block (delimited by curly braces)
+may contain a sequence of imperative statements.  However, such blocks may
+appear as terms in expressions; here they evaluate to entire updatable stores.
 
     | a := {
     |   c := 5
@@ -86,8 +87,8 @@ Empty blocks are permissible.
     | print a
     = []
 
-Once a store has been created, only those variables defined in the store
-can be updated and accessed — new variables cannot be added.
+Once a store has been created, only those variables used in the store can be
+updated and accessed — new variables cannot be added.
 
     | a := { b := 6 }
     | print a.c
@@ -132,9 +133,10 @@ inner block.
 
 We now present today's main feature.
 
-It's important to understand that a block need not define all the
-variables used in it.  Such blocks do not immediately evaluate to a store.
-Instead, they evaluate to an object called an _unsaturated store_.
+It's important to understand that a block need not define all the variables
+used in it.  That is, a block may contain variables which are used, but never
+assigned a value, in the block.  Such blocks do not immediately evaluate to a
+store.  Instead, they evaluate to an object called an _unsaturated store_.
 
 Or, to put it another way:
 
@@ -180,7 +182,7 @@ executed again.
     = [c=7,d=7]
     = [c=4,d=7]
 
-Saturating one copy of an unsaturated block will not saturate the other
+Saturating one copy of an unsaturated store will not saturate the other
 copy.
 
     | a := {
@@ -230,8 +232,9 @@ inside the block.
     | print a.b
     = 0
 
-If, however, the unsaturated store contains some variables that have
-been updated since the store was created, those variable may be accessed.
+If, however, the unsaturated store contains some unassigned variables that have
+been updated since the store was created, those variable may be accessed, even
+if the store is still unsaturated.
 
     | a := {
     |   print string "executing block"
@@ -243,7 +246,8 @@ been updated since the store was created, those variable may be accessed.
     = 7
 
 It is possible to assign a variable in an unsaturated store which is
-assigned somewhere in the block.
+assigned somewhere in the block.  When the store becomes saturated, however,
+that variable will be overwritten.
 
     | a := {
     |   b := 7
@@ -263,8 +267,8 @@ assigned somewhere in the block.
     = [b=7,c=4,d=4]
 
 It's important to note that a block is considered saturated when all the
-variables used in the block are assigned somewhere in the block.  If, in a
-block, a variable is used before it is assigned, the block will still be
+variables *used* in the block are *assigned* somewhere in the block.  If, in a
+block, a variable is used before it is assigned, the block will *still* be
 executed, if saturated.
 
     | a := {
@@ -310,11 +314,35 @@ the store unsaturated.
 
 We now describe how this language is (we reasonably assume) Turing-complete.
 
-Operations are accomplished with certain built-in unsaturated stores.  For
-example, there is a store called `add`, which can be used for addition.  These
-built-in stores are all located in the special store `$`, which is a Special
+Firstly, there is a built-in special store called `$`, which is a Special
 Name which is magically available in every scope and which cannot be assigned
 to, but which can be modified.
+
+    | $ := 4
+    ? Cannot assign to $
+
+    | $.foo := 4
+    | print string "ok"
+    = ok
+
+Since `$` is available in every scope, it can be thought of as being the
+"global scope", and can be conveniently used to communicate values across
+scopes.
+
+    | $.r := 4
+    | q := {
+    |   print string "hello"
+    |   c := $.r
+    |   j := d
+    | }
+    | q.d := 5
+    | print q.c
+    = hello
+    = 4
+
+Operations are accomplished with certain built-in unsaturated stores.  For
+example, there is a store called `add`, which can be used for addition.  These
+built-in stores are all located in the `$` store.
 
     | print $.add
     = [result=0,x=?,y=?]
@@ -324,13 +352,6 @@ to, but which can be modified.
     | }
     = [result=0,x=?,y=?]
 
-    | $ := 4
-    ? Cannot assign to $
-
-    | $.foo := 4
-    | print string "ok"
-    = ok
-
     | $.add.x := 3
     | $.add.y := 5
     | print $.add.result
@@ -339,8 +360,8 @@ to, but which can be modified.
     = [result=8,x=3,y=5]
 
 Because using a built-in operation store in this way saturates it, it cannot
-be used again.  Typically you want to make a copy of the store first, and use
-that, leaving the built-in store unmodified.
+be used again.  Typically, you will want to make a copy of the store first, and
+use that copy, leaving the built-in store unmodified.
 
     | o1 := $.add*
     | o1.x := 4
@@ -354,6 +375,46 @@ that, leaving the built-in store unmodified.
 Since Xoomonk is not a strictly minimalist language, there is a selection
 of built-in stores which provide useful operations: `$.add`, `$.sub`, `$.mul`,
 `$.div`, `$.gt`, and `$.not`.
+
+    | o1 := $.sub*
+    | o1.x := 7
+    | o1.y := 4
+    | print o1.result
+    = 3
+
+    | o1 := $.mul*
+    | o1.x := 7
+    | o1.y := 4
+    | print o1.result
+    = 28
+
+    | o1 := $.div*
+    | o1.x := 29
+    | o1.y := 4
+    | print o1.result
+    = 7
+
+    | o1 := $.gt*
+    | o1.x := 29
+    | o1.y := 4
+    | print o1.result
+    = 1
+
+    | o1 := $.gt*
+    | o1.x := 4
+    | o1.y := 4
+    | print o1.result
+    = 0
+
+    | o1 := $.not*
+    | o1.x := 29
+    | print o1.result
+    = 0
+
+    | o1 := $.not*
+    | o1.x := 0
+    | print o1.result
+    = 1
 
 Decision-making is also accomplished with a built-in store, `$.if`.  This store
 contains variables caled `cond`, `then`, and `else`.  `cond` should
