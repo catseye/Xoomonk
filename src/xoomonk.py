@@ -101,7 +101,7 @@ class Scanner(object):
         if self.scan_pattern(r'.', 'unknown character'):
             return
         else:
-            raise ValueError, "this should never happen, self.text=(%s)" % self.text
+            raise ValueError("this should never happen, self.text=(%s)" % self.text)
 
     def expect(self, token):
         if self.token == token:
@@ -234,7 +234,8 @@ class Parser(object):
 # Runtime support for Xoomonk.
 
 def demo(store):
-    print "demo!"
+    print("demo!")
+
 
 class MalingeringStore(object):
     """
@@ -438,7 +439,7 @@ def eval_xoomonk(ast, state):
             )
             return store
     else:
-        raise NotImplementedError, "not an AST type I know: %s" % type
+        raise NotImplementedError("not an AST type I know: %s" % type)
 
 
 def eval_block(block, enclosing_state):
@@ -473,7 +474,7 @@ def open_dollar_store():
         return store
 
     def div(store):
-        store['result'] = store['x'] / store['y']
+        store['result'] = store['x'] // store['y']
         return store
 
     def gt(store):
@@ -531,7 +532,7 @@ def main(argv):
         import doctest
         (fails, something) = doctest.testmod()
         if fails == 0:
-            print "All tests passed."
+            print("All tests passed.")
             sys.exit(0)
         else:
             sys.exit(1)
@@ -541,14 +542,15 @@ def main(argv):
     p = Parser(text)
     ast = p.program()
     if options.show_ast:
-        print repr(ast)
+        print(repr(ast))
     open_dollar_store()
     try:
         result = eval_xoomonk(ast, {})
     except XoomonkError as e:
         if options.raise_exceptions:
             raise
-        print >>sys.stderr, str(e)
+        sys.stderr.write(str(e))
+        sys.stderr.write("\n")
         sys.exit(1)
     sys.exit(0)
 

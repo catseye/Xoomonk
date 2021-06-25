@@ -1,3 +1,5 @@
 #!/bin/sh
 
-falderal README.markdown
+APPLIANCES='tests/appliances/xoomonk.py.md'
+
+falderal $APPLIANCES README.md $*
