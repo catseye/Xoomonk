@@ -5,7 +5,7 @@ if command -v python2 > /dev/null 2>&1; then
     APPLIANCES="$APPLIANCES tests/appliances/xoomonk.py2.md"
 fi
 if command -v python3 > /dev/null 2>&1; then
-    APPLIANCES="$APPLIANCES tests/appliances/xoomonk.py2.md"
+    APPLIANCES="$APPLIANCES tests/appliances/xoomonk.py3.md"
 fi
 
 if [ "x$APPLIANCES" = "x" ]; then
